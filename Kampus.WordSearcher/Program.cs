@@ -17,6 +17,7 @@ namespace Kampus.WordSearcher
                 var info = client.InitSession();
                 if (info.Status == Status.Conflict)
                     client.InitSession();
+                Console.WriteLine(info.Status);
                 var direction = Direction.Up;
                 while (true)
                 {
