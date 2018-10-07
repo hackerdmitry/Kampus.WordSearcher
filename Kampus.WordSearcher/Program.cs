@@ -22,9 +22,11 @@ namespace Kampus.WordSearcher
                 {
                     var field = client.MakeMove(direction);
                     Console.Clear();
-                    Console.WriteLine(field.Value.ToString(' ', '#'));
+                    if (field != null)
+                        Console.WriteLine(field.Value.ToString(' ', '#'));
                     direction = Console.ReadKey(true).ToDirection();
                 }
+
                 var stat = client.GetStatistics();
                 var pass = client.SendWords(new[] {"ШПОРА"});
                 var end = client.FinishSession();
@@ -40,6 +42,7 @@ namespace Kampus.WordSearcher
                 case ConsoleKey.S: return Direction.Down;
                 case ConsoleKey.D: return Direction.Right;
             }
+
             throw new InvalidOperationException();
         }
 
@@ -52,8 +55,10 @@ namespace Kampus.WordSearcher
                 {
                     sb.Append(map[row, column] ? full : empty);
                 }
+
                 sb.Append("\n");
             }
+
             return sb.ToString();
         }
     }
