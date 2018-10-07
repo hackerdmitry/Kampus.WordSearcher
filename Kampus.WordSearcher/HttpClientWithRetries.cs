@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Kampus.WordSearcher
 {
-    internal class HttpClientWithRetries : IDisposable 
+    class HttpClientWithRetries : IDisposable 
     {
         public HttpClientWithRetries(int retries, TimeSpan tryTimeout, TimeSpan retryTimeout)
         {
@@ -18,7 +18,10 @@ namespace Kampus.WordSearcher
             client = new HttpClient();
         }
 
-        public HttpRequestHeaders DefaultHeaders => client.DefaultRequestHeaders;
+        public HttpRequestHeaders DefaultHeaders
+        {
+            get { return client.DefaultRequestHeaders; }
+        }
 
         public Result<string> PostWithRetries(Uri uri, string data, string contentType)
         {
@@ -36,7 +39,7 @@ namespace Kampus.WordSearcher
             return SendRequestWithRetries(ct => client.GetAsync(uri, ct)).Result.Select(r => r.Content.ReadAsStringAsync().Result);
         }
 
-        private async Task<Result<HttpResponseMessage>> SendRequestWithRetries(Func<CancellationToken, Task<HttpResponseMessage>> action)
+        async Task<Result<HttpResponseMessage>> SendRequestWithRetries(Func<CancellationToken, Task<HttpResponseMessage>> action)
         {
             for (var i = 0; i < retries; i++)
             {
@@ -61,11 +64,14 @@ namespace Kampus.WordSearcher
             throw new AggregateException("Internal server error");
         }
 
-        public void Dispose() => client.Dispose();
+        public void Dispose()
+        {
+            client.Dispose();
+        }
 
-        private readonly HttpClient client;
-        private readonly int retries;
-        private readonly TimeSpan tryTimeout;
-        private readonly TimeSpan retryTimeout;
+        readonly HttpClient client;
+        readonly int retries;
+        readonly TimeSpan tryTimeout;
+        readonly TimeSpan retryTimeout;
     }
 }

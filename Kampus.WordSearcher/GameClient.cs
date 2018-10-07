@@ -11,7 +11,7 @@ namespace Kampus.WordSearcher
         {
             baseUri = new Uri(url.Trim('/'));
             client = new HttpClientWithRetries(retriesCount, TimeSpan.FromMilliseconds(tryTimeout), TimeSpan.FromMilliseconds(retryTimeout));
-            client.DefaultHeaders.Add("Authorization", $"token {authToken}");
+            client.DefaultHeaders.Add("Authorization", string.Format("token {0}", authToken));
         }
 
         public Result<SessionInfo> InitSession()
@@ -56,12 +56,22 @@ namespace Kampus.WordSearcher
             return client.PostWithRetries(GetUri("task/words"), JsonConvert.SerializeObject(words.ToArray()), "application/json").Deserialize<PointsStatistic>();
         }
 
-        private Uri GetUri(params string[] path) => new Uri(baseUri, string.Join("/", path));
+        Uri GetUri(params string[] path)
+        {
+            return new Uri(baseUri, string.Join("/", path));
+        }
 
-        public void Dispose() => client.Dispose();
-        ~GameClient() => Dispose();
+        public void Dispose()
+        {
+            client.Dispose();
+        }
 
-        private readonly HttpClientWithRetries client;
-        private readonly Uri baseUri;
+        ~GameClient()
+        {
+            Dispose();
+        }
+
+        readonly HttpClientWithRetries client;
+        readonly Uri baseUri;
     }
 }

@@ -11,7 +11,7 @@ namespace Kampus.WordSearcher
                 throw new ArgumentException("Expected 2 console line arguments!");
             var url = args[0];
             var apiKey = args[1];
-
+            Console.WriteLine("{0} {1}", url, apiKey);
             using (var client = new GameClient(url, apiKey))
             {
                 var info = client.InitSession();
@@ -31,7 +31,7 @@ namespace Kampus.WordSearcher
             }
         }
 
-        private static Direction ToDirection(this ConsoleKeyInfo k)
+        static Direction ToDirection(this ConsoleKeyInfo k)
         {
             switch (k.Key)
             {
@@ -43,7 +43,7 @@ namespace Kampus.WordSearcher
             throw new InvalidOperationException();
         }
 
-        private static string ToString(this bool[,] map, char empty, char full)
+        static string ToString(this bool[,] map, char empty, char full)
         {
             var sb = new StringBuilder();
             for (var row = 0; row < map.GetLength(0); row++)
