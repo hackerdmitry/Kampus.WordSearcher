@@ -30,7 +30,7 @@ namespace Kampus.WordSearcher
 
         public Result<HttpResponseMessage> PostWithRetriesRaw(Uri uri, string data, string contentType)
         {
-            var content = string.IsNullOrEmpty(data) ? null : new StringContent(data, Encoding.UTF8, contentType);
+            StringContent content = string.IsNullOrEmpty(data) ? null : new StringContent(data, Encoding.UTF8, contentType);
             return SendRequestWithRetries(ct => client.PostAsync(uri, content, ct)).Result;
         }
 
@@ -41,12 +41,12 @@ namespace Kampus.WordSearcher
 
         async Task<Result<HttpResponseMessage>> SendRequestWithRetries(Func<CancellationToken, Task<HttpResponseMessage>> action)
         {
-            for (var i = 0; i < retries; i++)
+            for (int i = 0; i < retries; i++)
             {
                 try
                 {
-                    var cts = new CancellationTokenSource(tryTimeout);
-                    var result = (await action(cts.Token));
+                    CancellationTokenSource cts = new CancellationTokenSource(tryTimeout);
+                    HttpResponseMessage result = (await action(cts.Token));
                     if (result.IsSuccessStatusCode)
                         return Result<HttpResponseMessage>.Success(result);
                     if (result.StatusCode == HttpStatusCode.Unauthorized)

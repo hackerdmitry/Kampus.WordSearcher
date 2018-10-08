@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using Newtonsoft.Json;
 
 namespace Kampus.WordSearcher
@@ -16,7 +17,7 @@ namespace Kampus.WordSearcher
 
         public Result<SessionInfo> InitSession()
         {
-            var r = client.PostWithRetriesRaw(GetUri("task/game/start"), "", "");
+            Result<HttpResponseMessage> r = client.PostWithRetriesRaw(GetUri("task/game/start"), "", "");
             if (r.IsFaulted)
                 return Result<SessionInfo>.Fail(r.Status);
 
@@ -39,14 +40,14 @@ namespace Kampus.WordSearcher
 
         public Result<bool[,]> MakeMove(Direction direction)
         {
-            var result = client.PostWithRetries(GetUri("task/move", direction.ToString().ToLower()), "", "");
+            Result<string> result = client.PostWithRetries(GetUri("task/move", direction.ToString().ToLower()), "", "");
             if (result.IsFaulted)
                 return Result<bool[,]>.Fail(result.Status);
 
-            var array = result.Value.Split('\n').Select(l => l.Trim().ToCharArray()).ToArray();
-            var map = new bool[array.Length, array.First().Length];
-            for (var row = 0; row < map.GetLength(0); row++)
-            for (var column = 0; column < map.GetLength(1); column++)
+            char[][] array = result.Value.Split('\n').Select(l => l.Trim().ToCharArray()).ToArray();
+            bool[,] map = new bool[array.Length, array.First().Length];
+            for (int row = 0; row < map.GetLength(0); row++)
+            for (int column = 0; column < map.GetLength(1); column++)
                 map[row, column] = array[row][column] == '1';
             return map.ToResult();
         }

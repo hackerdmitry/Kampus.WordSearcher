@@ -1,4 +1,5 @@
-﻿﻿using System;
+﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace Kampus.WordSearcher
@@ -9,23 +10,16 @@ namespace Kampus.WordSearcher
         {
             if (args.Length != 2)
                 throw new ArgumentException("Expected 2 console line arguments!");
-            var url = args[0];
-            var apiKey = args[1];
+            string url = args[0];
+            string apiKey = args[1];
             Console.WriteLine("{0} {1}", url, apiKey);
-            using (var client = new GameClient(url, apiKey))
+            using (GameClient client = new GameClient(url, apiKey))
             {
-                var info = client.InitSession();
+                Result<SessionInfo> info = client.InitSession();
                 if (info.Status == Status.Conflict)
                     client.InitSession();
-                Console.WriteLine(info.Status);
-                var direction = Direction.Up;
-                while (true)
-                {
-                    var field = client.MakeMove(direction);
-                    Console.Clear();
-                    Console.WriteLine(field.Value.ToString(' ', '#'));
-                    direction = Console.ReadKey(true).ToDirection();
-                }
+                Direction direction = Direction.Down;
+                new AI(client);
             }
         }
 
@@ -38,20 +32,23 @@ namespace Kampus.WordSearcher
                 case ConsoleKey.S: return Direction.Down;
                 case ConsoleKey.D: return Direction.Right;
             }
+
             throw new InvalidOperationException();
         }
 
-        static string ToString(this bool[,] map, char empty, char full)
+        public static string ToString(this bool[,] map, char empty, char full)
         {
-            var sb = new StringBuilder();
-            for (var row = 0; row < map.GetLength(0); row++)
+            StringBuilder sb = new StringBuilder();
+            for (int row = 0; row < map.GetLength(0); row++)
             {
-                for (var column = 0; column < map.GetLength(1); column++)
+                for (int column = 0; column < map.GetLength(1); column++)
                 {
                     sb.Append(map[row, column] ? full : empty);
                 }
+
                 sb.Append("\n");
             }
+
             return sb.ToString();
         }
     }
