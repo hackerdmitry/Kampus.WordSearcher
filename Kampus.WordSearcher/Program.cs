@@ -21,34 +21,5 @@ namespace Kampus.WordSearcher
                 new AI(client);
             }
         }
-
-        static Direction ToDirection(this ConsoleKeyInfo k)
-        {
-            switch (k.Key)
-            {
-                case ConsoleKey.W: return Direction.Up;
-                case ConsoleKey.A: return Direction.Left;
-                case ConsoleKey.S: return Direction.Down;
-                case ConsoleKey.D: return Direction.Right;
-            }
-
-            throw new InvalidOperationException();
-        }
-
-        public static string ToString(this bool[,] map, char empty, char full)
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int row = 0; row < map.GetLength(0); row++)
-            {
-                for (int column = 0; column < map.GetLength(1); column++)
-                {
-                    sb.Append(map[row, column] ? full : empty);
-                }
-
-                sb.Append("\n");
-            }
-
-            return sb.ToString();
-        }
     }
 }

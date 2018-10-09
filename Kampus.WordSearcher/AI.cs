@@ -34,8 +34,6 @@ namespace Kampus.WordSearcher
             listMap.RemoveRange(listMap.Count - height - 1, height);
             Console.WriteLine("{0} {1}", x, y);
             Console.WriteLine(client.GetStatistics().Value.Points);
-            Console.WriteLine(field.Value.ToString('-', '#'));
-            WriteListMapInFile(@"C:\Users\User\Desktop\listMapBegin.txt");
             Next(x, y);
         }
 
@@ -71,16 +69,21 @@ namespace Kampus.WordSearcher
             bool dir = true;
             for (int i = 0; i < (w - width) / (double) width; i++)
             {
-                for (int j = 0; j < h - 2 * height; j++, curY += dir ? 1 : -1)
-                {
-                    MakeMove(dir ? Direction.Down : Direction.Up);
-                    AddRowInListMap(curX, curY, dir ? height - 1 : 0, true, w);
-                }
+                if (i != 0)
+                    for (int j = 0; j < width; j++, curX++)
+                    {
+                        MakeMove(Direction.Right);
+                        AddColumnInListMap(curX + 1 + width - 1, curY, width - 1, true, w);
+                    }
 
-                for (int j = 0; j < width; j++, curX++)
+                for (int j = 0; j < h - 2 * height; j++)
                 {
-                    MakeMove(Direction.Right);
-                    AddColumnInListMap(curX, curY, width - 1, true);
+                    if (j == 0 && dir)
+                        for (int k = 0; k < height; k++)
+                            AddRowInListMap(curX, curY - height + 1 + k, k, true);
+                    curY += dir ? 1 : -1;
+                    MakeMove(dir ? Direction.Down : Direction.Up);
+                    AddRowInListMap(curX, dir ? curY : curY - height + 1, dir ? height - 1 : 0, true, w);
                 }
 
                 dir = !dir;
@@ -103,10 +106,10 @@ namespace Kampus.WordSearcher
                 {
                     curX += dir ? 1 : -1;
                     MakeMove(dir ? Direction.Right : Direction.Left);
-                    AddColumnInListMap(curX, curY, 0, true);
+                    AddColumnInListMap(curX, curY, 0, true, w);
                     if (j + 1 != w - 2 * width) continue;
                     for (int k = 1; k < width; k++)
-                        AddColumnInListMap(curX + k, curY, k, true);
+                        AddColumnInListMap(curX + k, curY, k, true, w);
                 }
 
                 dir = !dir;
@@ -114,11 +117,11 @@ namespace Kampus.WordSearcher
         }
 
 
-        void AddColumnInListMap(int x, int y, int numColumn, bool @lock)
+        void AddColumnInListMap(int x, int y, int numColumn, bool @lock, int w = int.MaxValue)
         {
             if (!@lock) AddNewRows(y + height);
             for (int i = 0; i < height; i++)
-                if (y + i >= listMap.Count)
+                if (y + i >= listMap.Count || listMap[y + i].Count >= w)
                     break;
                 else if (listMap[y + i].Count <= x)
                 {
