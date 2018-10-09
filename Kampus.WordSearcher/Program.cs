@@ -13,12 +13,12 @@ namespace Kampus.WordSearcher
             string url = args[0];
             string apiKey = args[1];
             Console.WriteLine("{0} {1}", url, apiKey);
+//            using (GameClient client = new GameClient(url, apiKey))
             using (GameClient client = new GameClient(url, apiKey))
             {
                 Result<SessionInfo> info = client.InitSession();
                 if (info.Status == Status.Conflict)
                     client.InitSession();
-                Direction direction = Direction.Down;
                 new AI(client);
             }
         }

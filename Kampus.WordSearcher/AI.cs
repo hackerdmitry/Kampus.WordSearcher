@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace Kampus.WordSearcher
 {
@@ -14,8 +16,13 @@ namespace Kampus.WordSearcher
         public AI(GameClient client)
         {
             this.client = client;
-            field = this.client.MakeMove(Direction.Up);
+            MakeMove(Direction.Up);
             GoToRound();
+        }
+
+        void MakeMove(Direction direction)
+        {
+            field = client.MakeMove(direction);
         }
 
         void GoToRound()
@@ -24,18 +31,92 @@ namespace Kampus.WordSearcher
             AlignPosition();
             bool[,] screenshot = Screenshot();
             int x = GetWidthMap(screenshot), y = GetHeightMap(screenshot);
-            listMap.RemoveRange(listMap.Count - height, height);
+            listMap.RemoveRange(listMap.Count - height - 1, height);
             Console.WriteLine("{0} {1}", x, y);
             Console.WriteLine(client.GetStatistics().Value.Points);
             Console.WriteLine(field.Value.ToString('-', '#'));
+            Next(x, y);
         }
 
-        void AddColumnInListMap(int x, int y, int numColumn)
+        void Next(int w, int h)
         {
-            AddNewRows(y + height);
-            for (int i = 0; i < height; i++)
-                if (listMap[y + i].Count <= x)
+            int curX = 0, curY = 0;
+            for (int i = 0; i < height; i++, curY++)
+                MakeMove(Direction.Down);
+            for (int i = 0; i < width; i++, curX++)
+                MakeMove(Direction.Right);
+            if (w / width == 0)
+                MoveParallelY(curX, curY, w, h);
+            else
+                MoveParallelX(curX, curY, w, h);
+            WriteListMapInFile();
+        }
+
+        void WriteListMapInFile()
+        {
+            StreamWriter writeList = new StreamWriter(@"C:\Users\User\Desktop\listMap.txt", false);
+            foreach (List<bool> listI in listMap)
+            {
+                foreach (bool listJ in listI)
+                    writeList.Write(listJ ? '#' : '-');
+                writeList.Write('\n');
+            }
+
+            writeList.Close();
+        }
+
+        void MoveParallelY(int curX, int curY, int w, int h)
+        {
+            bool dir = true;
+            for (int i = 0; i < (w - width) / (double) width; i++)
+            {
+                for (int j = 0; j < h - 2 * height; j++, curY += dir ? 1 : -1)
                 {
+                    MakeMove(dir ? Direction.Down : Direction.Up);
+                    AddRowInListMap(curX, curY, dir ? height - 1 : 0, true, w);
+                }
+
+                for (int j = 0; j < width; j++, curX++)
+                {
+                    MakeMove(Direction.Right);
+                    AddColumnInListMap(curX, curY, width - 1, true);
+                }
+
+                dir = !dir;
+            }
+        }
+
+        void MoveParallelX(int curX, int curY, int w, int h)
+        {
+            bool dir = true;
+            for (int i = 0; i < (h - height) / (double) height; i++)
+            {
+                for (int j = 0; j < w - 2 * width; j++, curX += dir ? 1 : -1)
+                {
+                    MakeMove(dir ? Direction.Right : Direction.Left);
+                    AddColumnInListMap(curX, curY, dir ? width - 1 : 0, true);
+                }
+
+                for (int j = 0; j < height; j++, curY++)
+                {
+                    MakeMove(Direction.Down);
+                    AddRowInListMap(curX, curY, height - 1, true, w);
+                }
+
+                dir = !dir;
+            }
+        }
+
+
+        void AddColumnInListMap(int x, int y, int numColumn, bool @lock)
+        {
+            if (!@lock) AddNewRows(y + height);
+            for (int i = 0; i < height; i++)
+                if (y + i >= listMap.Count)
+                    break;
+                else if (listMap[y + i].Count <= x)
+                {
+                    if (@lock) continue;
                     AddNewColumns(x, y + i);
                     listMap[y + i].Add(field.Value[i, numColumn]);
                 }
@@ -43,13 +124,14 @@ namespace Kampus.WordSearcher
                     listMap[y + i][x] = field.Value[i, numColumn];
         }
 
-        void AddRowInListMap(int x, int y, int numRow)
+        void AddRowInListMap(int x, int y, int numRow, bool @lock, int w = int.MaxValue)
         {
-            AddNewRows(y + height);
+            if (!@lock) AddNewRows(y + height);
             for (int i = x; i < x + width; i++)
             {
+                if (i + 1 >= w || y + height - 1 >= listMap.Count) break;
                 AddNewColumns(i + 1, y + height - 1);
-                listMap[y + height - 1][i] = field.Value[numRow, i];
+                listMap[y + height - 1][i] = field.Value[numRow, i - x];
             }
         }
 
@@ -61,7 +143,7 @@ namespace Kampus.WordSearcher
 
         void AddNewRows(int y)
         {
-            while(listMap.Count < y)
+            while (listMap.Count < y)
                 listMap.Add(new List<bool>());
         }
 
@@ -122,7 +204,7 @@ namespace Kampus.WordSearcher
             bool trigger = false;
             while (CheckFullCells() == 0)
             {
-                field = client.MakeMove(trigger ? Direction.Down : Direction.Right);
+                MakeMove(trigger ? Direction.Down : Direction.Right);
                 trigger = !trigger;
             }
         }
@@ -135,7 +217,7 @@ namespace Kampus.WordSearcher
             if (findFull)
                 clearLine = height - clearLine - 1;
             for (int i = 0; i < clearLine + 1; i++)
-                field = client.MakeMove(dir);
+                MakeMove(dir);
         }
 
         int GetWidthMap(bool[,] screenshot)
@@ -143,9 +225,9 @@ namespace Kampus.WordSearcher
             int x = 0;
             do
             {
-                AddColumnInListMap(x, 0, width - 1);
+                AddColumnInListMap(x, 0, width - 1, false);
                 x++;
-                field = client.MakeMove(Direction.Right);
+                MakeMove(Direction.Right);
             } while (!EqualsForScreenshot(screenshot));
 
             return x;
@@ -157,8 +239,8 @@ namespace Kampus.WordSearcher
             do
             {
                 y++;
-                AddRowInListMap(0, y, height - 1);
-                field = client.MakeMove(Direction.Down);
+                AddRowInListMap(0, y, height - 1, false);
+                MakeMove(Direction.Down);
             } while (!EqualsForScreenshot(screenshot));
 
             return y;
