@@ -16,7 +16,7 @@ namespace Kampus.WordSearcher
         public AI(GameClient client)
         {
             this.client = client;
-            MakeMove(Direction.Up);
+            MakeMove(Direction.Down);
             GoToRound();
         }
 
@@ -92,16 +92,21 @@ namespace Kampus.WordSearcher
             bool dir = true;
             for (int i = 0; i < (h - height) / (double) height; i++)
             {
-                for (int j = 0; j < w - 2 * width; j++, curX += dir ? 1 : -1)
-                {
-                    MakeMove(dir ? Direction.Right : Direction.Left);
-                    AddColumnInListMap(curX, curY, dir ? width - 1 : 0, true);
-                }
+                if (i != 0)
+                    for (int j = 0; j < height; j++, curY++)
+                    {
+                        MakeMove(Direction.Down);
+                        AddRowInListMap(curX, curY + 1, height - 1, true, w);
+                    }
 
-                for (int j = 0; j < height; j++, curY++)
+                for (int j = 0; j < w - 2 * width; j++)
                 {
-                    MakeMove(Direction.Down);
-                    AddRowInListMap(curX, curY, height - 1, true, w);
+                    curX += dir ? 1 : -1;
+                    MakeMove(dir ? Direction.Right : Direction.Left);
+                    AddColumnInListMap(curX, curY, 0, true);
+                    if (j + 1 != w - 2 * width) continue;
+                    for (int k = 1; k < width; k++)
+                        AddColumnInListMap(curX + k, curY, k, true);
                 }
 
                 dir = !dir;
@@ -117,7 +122,6 @@ namespace Kampus.WordSearcher
                     break;
                 else if (listMap[y + i].Count <= x)
                 {
-                    if (@lock) continue;
                     AddNewColumns(x, y + i);
                     listMap[y + i].Add(field.Value[i, numColumn]);
                 }
@@ -130,7 +134,7 @@ namespace Kampus.WordSearcher
             if (!@lock) AddNewRows(y + height);
             for (int i = x; i < x + width; i++)
             {
-                if (i + 1 >= w || y + height - 1 >= listMap.Count) break;
+                if (i + 1 > w || y + height - 1 >= listMap.Count) break;
                 AddNewColumns(i + 1, y + height - 1);
                 listMap[y + height - 1][i] = field.Value[numRow, i - x];
             }
