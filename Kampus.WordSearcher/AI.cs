@@ -35,6 +35,7 @@ namespace Kampus.WordSearcher
             Console.WriteLine("{0} {1}", x, y);
             Console.WriteLine(client.GetStatistics().Value.Points);
             Console.WriteLine(field.Value.ToString('-', '#'));
+            WriteListMapInFile(@"C:\Users\User\Desktop\listMapBegin.txt");
             Next(x, y);
         }
 
@@ -45,16 +46,16 @@ namespace Kampus.WordSearcher
                 MakeMove(Direction.Down);
             for (int i = 0; i < width; i++, curX++)
                 MakeMove(Direction.Right);
-            if (w / width == 0)
+            if (w % width == 0)
                 MoveParallelY(curX, curY, w, h);
             else
                 MoveParallelX(curX, curY, w, h);
-            WriteListMapInFile();
+            WriteListMapInFile(@"C:\Users\User\Desktop\listMap.txt");
         }
 
-        void WriteListMapInFile()
+        void WriteListMapInFile(string uri)
         {
-            StreamWriter writeList = new StreamWriter(@"C:\Users\User\Desktop\listMap.txt", false);
+            StreamWriter writeList = new StreamWriter(uri, false);
             foreach (List<bool> listI in listMap)
             {
                 foreach (bool listJ in listI)
@@ -225,7 +226,7 @@ namespace Kampus.WordSearcher
             int x = 0;
             do
             {
-                AddColumnInListMap(x, 0, width - 1, false);
+                AddColumnInListMap(x, 0, 0, false);
                 x++;
                 MakeMove(Direction.Right);
             } while (!EqualsForScreenshot(screenshot));
@@ -239,8 +240,8 @@ namespace Kampus.WordSearcher
             do
             {
                 y++;
-                AddRowInListMap(0, y, height - 1, false);
                 MakeMove(Direction.Down);
+                AddRowInListMap(0, y, height - 1, false);
             } while (!EqualsForScreenshot(screenshot));
 
             return y;
