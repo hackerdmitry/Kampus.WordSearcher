@@ -17,8 +17,8 @@ namespace Kampus.WordSearcher
 
         public Result<SessionInfo> InitSession()
         {
-            Result<HttpResponseMessage> r = client.PostWithRetriesRaw(GetUri("task/game/start"), "", "");
-//            Result<HttpResponseMessage> r = client.PostWithRetriesRaw(GetUri("task/game/start?test=true"), "", "");
+//            Result<HttpResponseMessage> r = client.PostWithRetriesRaw(GetUri("task/game/start"), "", "");
+            Result<HttpResponseMessage> r = client.PostWithRetriesRaw(GetUri("task/game/start?test=true"), "", "");
             if (r.IsFaulted)
                 return Result<SessionInfo>.Fail(r.Status);
 

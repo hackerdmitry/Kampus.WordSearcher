@@ -18,8 +18,21 @@ namespace Kampus.WordSearcher
                 if (info.Status == Status.Conflict)
                     client.InitSession();
                 Console.WriteLine(info.Value.Expires.TotalMinutes);
-                new AI(client);
+                FindAndSendWords(client);
             }
+        }
+
+        static void FindAndSendWords(GameClient client)
+        {
+            tryAgain:
+//            try
+//            {
+                new AI(client);
+//            }
+//            catch
+//            {
+//                goto tryAgain;
+//            }
         }
     }
 }

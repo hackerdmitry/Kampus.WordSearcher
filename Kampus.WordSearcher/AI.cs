@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace Kampus.WordSearcher
@@ -10,8 +9,11 @@ namespace Kampus.WordSearcher
     {
         readonly GameClient client;
         Result<bool[,]> field;
-        const int width = 7, height = 7;
+        public const int width = 7, height = 7;
         readonly List<List<bool>> listMap = new List<List<bool>>();
+
+        Dictionary<string, LinkedList<char>> begins = new Dictionary<string, LinkedList<char>>();
+        Dictionary<string, LinkedList<char>> ends = new Dictionary<string, LinkedList<char>>();
 
         public AI(GameClient client)
         {
@@ -31,7 +33,7 @@ namespace Kampus.WordSearcher
             AlignPosition();
             bool[,] screenshot = Screenshot();
             int x = GetWidthMap(screenshot), y = GetHeightMap(screenshot);
-            listMap.RemoveRange(listMap.Count - height - 1, height);
+            listMap.RemoveRange(listMap.Count - height, height);
             Console.WriteLine("{0} {1}", x, y);
             Console.WriteLine(client.GetStatistics().Value.Points);
             Next(x, y);
@@ -49,6 +51,61 @@ namespace Kampus.WordSearcher
             else
                 MoveParallelX(curX, curY, w, h);
             WriteListMapInFile(@"C:\Users\User\Desktop\listMap.txt");
+            FindLetters(w, h);
+        }
+
+        void FindLetters(int w, int h)
+        {
+            for (int i = 0; i < h; i++)
+            {
+                for (int j = 0; j < w; j++)
+                {
+                    if (!listMap.SomethingLikeALetter(i, j, w, h)) continue;
+                    char letter = listMap.GetLetter(i, j, w, h);
+                    if (letter == Letter.wrongLetter) continue;
+                    if (begins.ContainsKey((j + width + 1) % w + " " + i))
+                    {
+                        ReplaceKey(begins, (j + width + 1) % w + " " + i, j + " " + i);
+                        begins[j + " " + i].AddFirst(letter);
+                    }
+                    else if (ends.ContainsKey((j - width - 1) % w + " " + i))
+                    {
+                        ReplaceKey(ends, (j - width - 1) % w + " " + i, j + " " + i);
+                        ends[j + " " + i].AddLast(letter);
+                    }
+                    else AddNewLinkedList(i, j, letter);
+
+                    j += width;
+                }
+            }
+
+            AnalyseWords();
+        }
+
+        void AnalyseWords()
+        {
+            foreach (KeyValuePair<string, LinkedList<char>> keyValuePair in begins)
+            {
+                string word = "";
+                foreach (char c in keyValuePair.Value)
+                    word += c;
+                Console.WriteLine(word);
+            }
+        }
+
+        static void ReplaceKey(IDictionary<string, LinkedList<char>> dictionary, string key, string newKey)
+        {
+            LinkedList<char> linkedList = dictionary[key];
+            dictionary.Remove(key);
+            dictionary.Add(newKey, linkedList);
+        }
+
+        void AddNewLinkedList(int i, int j, char letter)
+        {
+            LinkedList<char> linkedList = new LinkedList<char>();
+            linkedList.AddLast(letter);
+            begins.Add(j + " " + i, linkedList);
+            ends.Add(j + " " + i, linkedList);
         }
 
         void WriteListMapInFile(string uri)
@@ -106,10 +163,10 @@ namespace Kampus.WordSearcher
                 {
                     curX += dir ? 1 : -1;
                     MakeMove(dir ? Direction.Right : Direction.Left);
-                    AddColumnInListMap(curX, curY, 0, true, w);
+                    AddColumnInListMap(curX, curY, 0, true);
                     if (j + 1 != w - 2 * width) continue;
                     for (int k = 1; k < width; k++)
-                        AddColumnInListMap(curX + k, curY, k, true, w);
+                        AddColumnInListMap(curX + k, curY, k, true);
                 }
 
                 dir = !dir;
