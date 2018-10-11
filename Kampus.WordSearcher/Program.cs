@@ -25,14 +25,14 @@ namespace Kampus.WordSearcher
         static void FindAndSendWords(GameClient client)
         {
             tryAgain:
-//            try
-//            {
+            try
+            {
                 new AI(client);
-//            }
-//            catch
-//            {
-//                goto tryAgain;
-//            }
+            }
+            catch
+            {
+                goto tryAgain;
+            }
         }
     }
 }

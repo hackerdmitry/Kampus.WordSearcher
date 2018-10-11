@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Kampus.WordSearcher
@@ -12,9 +13,11 @@ namespace Kampus.WordSearcher
         public const int width = 7, height = 7;
         readonly List<List<bool>> listMap = new List<List<bool>>();
 
-        Dictionary<string, LinkedList<char>> begins = new Dictionary<string, LinkedList<char>>();
-        Dictionary<string, LinkedList<char>> ends = new Dictionary<string, LinkedList<char>>();
+        readonly Dictionary<string, LinkedList<char>> begins = new Dictionary<string, LinkedList<char>>(),
+                                                      ends = new Dictionary<string, LinkedList<char>>();
 
+        HashSet<string> wordToSend = new HashSet<string>();
+        
         public AI(GameClient client)
         {
             this.client = client;
@@ -60,8 +63,8 @@ namespace Kampus.WordSearcher
             {
                 for (int j = 0; j < w; j++)
                 {
-                    if (!listMap.SomethingLikeALetter(i, j, w, h)) continue;
-                    char letter = listMap.GetLetter(i, j, w, h);
+                    if (!listMap.SomethingLikeALetter(j, i, w, h)) continue;
+                    char letter = listMap.GetLetter(j, i, w, h);
                     if (letter == Letter.wrongLetter) continue;
                     if (begins.ContainsKey((j + width + 1) % w + " " + i))
                     {
@@ -79,18 +82,50 @@ namespace Kampus.WordSearcher
                 }
             }
 
-            AnalyseWords();
+            AnalyseWords(w);
+            CorrectShipping();
         }
 
-        void AnalyseWords()
+        void AnalyseWords(int w)
         {
-            foreach (KeyValuePair<string, LinkedList<char>> keyValuePair in begins)
+            Dictionary<string, LinkedList<char>>.Enumerator keyValuePair = begins.GetEnumerator();
+            keyValuePair.MoveNext();
+            string lastWord = GetWord(keyValuePair);
+            string lastPosX = keyValuePair.Current.Key;
+            while (keyValuePair.MoveNext())
             {
-                string word = "";
-                foreach (char c in keyValuePair.Value)
-                    word += c;
-                Console.WriteLine(word);
+                string word = GetWord(keyValuePair);
+                string[] xy = keyValuePair.Current.Key.Split();
+                if (lastPosX == ((width + 1) * word.Length + int.Parse(xy[0])) % w + " " + xy[1])
+                {
+                    wordToSend.Add(word + lastWord);
+                    if(!keyValuePair.MoveNext())
+                        return;
+                    lastWord = GetWord(keyValuePair);
+                    lastPosX = keyValuePair.Current.Key;
+                    continue;
+                }
+                wordToSend.Add(lastWord);
+                lastWord = word;
+                lastPosX = keyValuePair.Current.Key;
             }
+
+            wordToSend.Add(lastWord);
+        }
+
+        void CorrectShipping()
+        {
+            Result<PointsStatistic> stat = client.SendWords(wordToSend.OrderBy(x => x.Length));
+            Console.WriteLine("Набрано очков: {0}", stat.Value.Points);
+            client.FinishSession();
+        }
+
+        string GetWord(Dictionary<string, LinkedList<char>>.Enumerator keyValuePair)
+        {
+            string word = "";
+            foreach (char c in keyValuePair.Current.Value)
+                word += c;
+            return word;
         }
 
         static void ReplaceKey(IDictionary<string, LinkedList<char>> dictionary, string key, string newKey)
